@@ -12,7 +12,7 @@ app.use(cors());
 const db = require("./models/index");
 
 db.sequelize
-  .sync({ alter: true })
+  .authenticate()
   .then(() => {
     console.log("Database connection established");
   })
@@ -25,4 +25,4 @@ app.listen(PORT, () => {
 
 app.use(express.json());
 
-// app.use("/users", userRoute);
+

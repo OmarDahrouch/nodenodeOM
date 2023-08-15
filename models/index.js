@@ -4,6 +4,8 @@ const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
 const process = require('process');
+const { log } = require('console');
+const colonne = require('./colonne');
 const basename = path.basename(__filename);
 const env = process.env.NODE_ENV || 'development';
 const config = require(__dirname + '/../config/config.json')[env];
@@ -36,6 +38,40 @@ Object.keys(db).forEach(modelName => {
     db[modelName].associate(db);
   }
 });
+
+async function logModelsWithColumnsAndAssociations(Id) {
+  try {
+    const modelsWithColumns = await db.Model.findAll({
+      where: { ProjetId: Id },
+      include: [
+        {
+          model: db.Colonne,
+          include: [db.TypeColonne],
+        },
+        {
+          model: db.ModelAssociation,
+          as: 'modelAssociations',
+          include: [db.Association, { model: db.Model, as: "modelB" }],
+        },
+      ],
+    });
+    for (const model of modelsWithColumns) {
+      console.log(JSON.stringify(model));
+
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    throw new Error('An error occurred');
+  }
+}
+
+
+const ProjectId = 1;
+logModelsWithColumnsAndAssociations(ProjectId);
+
+// const generateModel = ()
+
+
 
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
