@@ -5,7 +5,6 @@ const path = require('path');
 const Sequelize = require('sequelize');
 const process = require('process');
 const { log } = require('console');
-const colonne = require('./colonne');
 const basename = path.basename(__filename);
 const env = process.env.NODE_ENV || 'development';
 const config = require(__dirname + '/../config/config.json')[env];
@@ -55,10 +54,9 @@ async function logModelsWithColumnsAndAssociations(Id) {
         },
       ],
     });
-    for (const model of modelsWithColumns) {
-      console.log(JSON.stringify(model));
 
-    }
+    return modelsWithColumns;
+
   } catch (error) {
     console.error('Error:', error);
     throw new Error('An error occurred');
@@ -66,11 +64,38 @@ async function logModelsWithColumnsAndAssociations(Id) {
 }
 
 
-const ProjectId = 1;
-logModelsWithColumnsAndAssociations(ProjectId);
 
-// const generateModel = ()
 
+const generateModel = async (ProjectId) => {
+
+  const Data = await logModelsWithColumnsAndAssociations(ProjectId)
+  for (const model of Data) {
+    const columnDefinitions = [];
+    const colonneData = await model.Colonnes
+    const associationData = await model.modelAssociations
+
+    for (const colonne of colonneData) {
+      const columnDef = `${colonne.nomColonne}: {type:DataTypes.${colonne.TypeColonne.nomType}},
+      `;
+      columnDefinitions.push(columnDef);
+    }
+
+    let modelCode = `
+
+    const ${model.nomModel} = sequelize.define('${model.nomModel}', {
+      //colonne
+      ${columnDefinitions.join(',\n')}
+    });
+    
+    module.exports = ${model.nomModel};
+`;
+
+    console.log('Generating model', modelCode)
+
+  }
+}
+
+generateModel(1)
 
 
 db.sequelize = sequelize;
