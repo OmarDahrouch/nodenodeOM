@@ -6,6 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "nodemonConfig": {
+    "ignore": ["dynamic_modules/*"]},
   "author": "",
   "license": "ISC",
   "dependencies": {
