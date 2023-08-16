@@ -1,5 +1,6 @@
 'use strict';
 
+require("dotenv").config();
 const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
@@ -64,38 +65,62 @@ async function logModelsWithColumnsAndAssociations(Id) {
 }
 
 
-
-
 const generateModel = async (ProjectId) => {
 
   const Data = await logModelsWithColumnsAndAssociations(ProjectId)
+  const modelDefinition = []
   for (const model of Data) {
-    const columnDefinitions = [];
     const colonneData = await model.Colonnes
     const associationData = await model.modelAssociations
+    const columnDefinitions = [];
+    const associationDefinitions = [];
+
 
     for (const colonne of colonneData) {
-      const columnDef = `${colonne.nomColonne}: {type:DataTypes.${colonne.TypeColonne.nomType}},
-      `;
+      const columnDef = `${colonne.nomColonne}: {
+        type: DataTypes.${colonne.TypeColonne.nomType},
+        allowNull: ${colonne.allowNull},
+        defaultValue: "${colonne.defaultValue}",
+        autoIncrement: ${colonne.autoIncrement},
+        primaryKey: ${colonne.primaryKey},
+        unique: ${colonne.unique},
+        field: "${colonne.field}",
+      }`;
       columnDefinitions.push(columnDef);
     }
 
-    let modelCode = `
+    for (const association of associationData) {
+      const associationDef = `
+        ${model.nomModel}.${association.Association.typeAssociation}(models.${association.modelB.nomModel});`;
+      associationDefinitions.push(associationDef);
+    }
 
+    let modelCode = `
+    const { Sequelize, DataTypes } = require("sequelize");
     const ${model.nomModel} = sequelize.define('${model.nomModel}', {
-      //colonne
+      //colonnes
       ${columnDefinitions.join(',\n')}
     });
+
+    //Association
+    ${associationDefinitions.length > 0
+        ? `
+    ${model.nomModel}.associate = function (models){
+      ${associationDefinitions.join("")}
+    };`
+        : ""
+      }
     
     module.exports = ${model.nomModel};
 `;
-
-    console.log('Generating model', modelCode)
-
+    modelDefinition.push(modelCode);
   }
+  console.log('Generating model', modelDefinition)
+  return modelDefinition
 }
 
-generateModel(1)
+const ProjectId = process.env.ProjetId;
+generateModel(ProjectId);
 
 
 db.sequelize = sequelize;
