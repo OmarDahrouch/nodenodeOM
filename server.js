@@ -4,7 +4,7 @@ const { Sequelize } = require("sequelize");
 const cors = require("cors");
 
 const app = express();
-const PORT = 3030;
+const PORT = 5000;
 
 app.use(cors());
 
@@ -24,5 +24,3 @@ app.listen(PORT, () => {
 });
 
 app.use(express.json());
-
-
