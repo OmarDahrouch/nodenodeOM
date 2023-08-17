@@ -4,8 +4,8 @@ require("dotenv").config();
 const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
-const process = require('process');
 const { log } = require('console');
+const modelAssociation = require("./modelAssociation");
 const basename = path.basename(__filename);
 const env = process.env.NODE_ENV || 'development';
 const config = require(__dirname + '/../config/config.json')[env];
@@ -65,88 +65,78 @@ async function logModelsWithColumnsAndAssociations(Id) {
   }
 }
 
-
-const generateModel = async (ProjectId) => {
-
-  const Data = await logModelsWithColumnsAndAssociations(ProjectId)
-  const modelDefinition = []
-  for (const model of Data) {
-    const colonneData = await model.Colonnes
-    const associationData = await model.modelAssociations
-    const columnDefinitions = [];
-    const associationDefinitions = [];
-
-
-    for (const colonne of colonneData) {
-      const columnDef = `${colonne.nomColonne}: {
-        type: DataTypes.${colonne.TypeColonne.nomType},
-        allowNull: ${colonne.allowNull},
-        defaultValue: "${colonne.defaultValue}",
-        autoIncrement: ${colonne.autoIncrement},
-        primaryKey: ${colonne.primaryKey},
-        unique: ${colonne.unique},
-        field: "${colonne.field}",
-      }`;
-      columnDefinitions.push(columnDef);
-    }
-
-    for (const association of associationData) {
-      const associationDef = `${model.nomModel}.${association.Association.typeAssociation}(models.${association.modelB.nomModel});`;
-      associationDefinitions.push(associationDef);
-    }
-
-    let modelCode = `
-    const { Sequelize, DataTypes } = require("sequelize");
-    module.exports = (sequelize) => {
-    const ${model.nomModel} = sequelize.define('${model.nomModel}', {
-      //colonnes
-      ${columnDefinitions.join(',\n')}
+async function getAssociationsForModel(modelName) {
+  try {
+    // Replace this with your logic to fetch associations data
+    const associationsData = await db.ModelAssociation.findAll({
+      where: { '$modelA.nomModel$': modelName }, include: [{ model: db.Model, as: 'modelA' }, { model: db.Model, as: 'modelB' }, db.Association]
     });
 
-    //Association
-    ${associationDefinitions.length > 0
-        ? `
-    ${model.nomModel}.associate = function (models){
-      ${associationDefinitions.join("")}
-    };`
-        : ""
-      }
-    return ${model.nomModel};
-    }
-`;
-    modelDefinition.push(modelCode);
+    return associationsData;
+  } catch (error) {
+    console.error('Error fetching associations data:', error);
+    return [];
   }
-  console.log('Generating model', modelDefinition)
-  return modelDefinition
+}
+
+const generateModel = async (ProjectId) => {
+  const Data = await logModelsWithColumnsAndAssociations(ProjectId);
+  const generatedModels = [];
+
+  for (const model of Data) {
+    const colonneData = await model.Colonnes;
+    const columnDefinitions = [];
+
+    for (const colonne of colonneData) {
+      const columnDef = {
+        type: Sequelize.DataTypes[colonne.TypeColonne.nomType],
+        allowNull: colonne.allowNull,
+        defaultValue: colonne.defaultValue,
+        autoIncrement: colonne.autoIncrement,
+        primaryKey: colonne.primaryKey,
+        unique: colonne.unique,
+        field: colonne.field,
+      };
+      columnDefinitions.push({ [colonne.nomColonne]: columnDef });
+    }
+
+    const modelName = model.nomModel;
+
+    const generatedModel = sequelize.define(modelName, {
+      ...Object.assign({}, ...columnDefinitions),
+    });
+
+    db[modelName] = generatedModel;
+
+
+    generatedModels.push(generatedModel);
+  }
+
+  console.log('Generating models', generatedModels);
+  return generatedModels;
 }
 
 const ProjectId = process.env.ProjetId;
 
-
 async function loadGeneratedModels() {
   try {
-    const generatedModelDefinitions = await generateModel(ProjectId);
+    const generatedModels = await generateModel(ProjectId);
 
-    const dynamicModulesDir = path.join(__dirname, 'dynamic_modules');
 
-    if (!fs.existsSync(dynamicModulesDir)) {
-      fs.mkdirSync(dynamicModulesDir);
-    }
-
-    const generatedModels = [];
-
-    for (let i = 0; i < generatedModelDefinitions.length; i++) {
-      const modelDefinition = generatedModelDefinitions[i];
-      const dynamicModulePath = path.join(dynamicModulesDir, `model_${i}.js`);
-      // Create a dynamic module file with the model definition
-      console.log('Generating dynamic module', dynamicModulePath)
-      fs.writeFileSync(dynamicModulePath, modelDefinition);
-
-      // Load the dynamic module and call the exported function to get the model instance
-      const generatedModelFactoryFunction = require(dynamicModulePath);
-      const generatedModelInstance = generatedModelFactoryFunction(sequelize);
-
-      generatedModels.push(generatedModelInstance);
+    for (const model of generatedModels) {
+      const associationsData = await getAssociationsForModel(model.name);
+      for (const association of associationsData) {
+        console.log("association", association)
+        if (association.Association.typeAssociation === 'belongsTo') {
+          model.belongsTo(db[association.modelB.nomModel]);
+        } else if (association.Association.typeAssociation === 'hasMany') {
+          model.hasMany(db[association.modelB.nomModel]);
+        } else if (association.Association.typeAssociation === 'hasOne') {
+          model.hasOne(db[association.modelB.nomModel]);
+        } else if (association.Association.typeAssociation === 'belongsToMany') {
+          model.belongsToMany(db[association.modelB.nomModel], { through: association.through });
+        }
+      }
     }
     await sequelize.sync();
 
@@ -158,7 +148,6 @@ async function loadGeneratedModels() {
 }
 
 loadGeneratedModels();
-
 
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
