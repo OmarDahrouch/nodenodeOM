@@ -14,10 +14,10 @@ const db = require("./models/index");
 db.sequelize
   .authenticate()
   .then(() => {
-    console.log("Database connection established");
+    console.log("Synced db.");
   })
-  .catch((error) => {
-    console.error("Unable to connect to the database:", error);
+  .catch((err) => {
+    console.log("Failed to sync db: " + err.message);
   });
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
