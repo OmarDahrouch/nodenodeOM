@@ -10,6 +10,7 @@ const env = process.env.NODE_ENV || 'development';
 const config = require(__dirname + '/../config/config.json')[env];
 
 const db = {};
+const dbtarget = {};
 
 const targetDbConfig = {
   username: "root",
@@ -114,9 +115,11 @@ const generateModel = async (ProjectId) => {
     const modelName = model.nomModel;
 
 
+    // console.log(targetDbSequelize);
     const generatedModel = targetDbSequelize.define(modelName, {
       ...Object.assign({}, ...columnDefinitions),
     });
+
 
     targetDbSequelize[modelName] = generatedModel;
 
@@ -149,20 +152,22 @@ async function loadGeneratedModels() {
       }
     }
     await targetDbSequelize.sync();
-    console.log(targetDbSequelize)
 
     console.log('Generated models loaded successfully.');
+
 
   } catch (error) {
     console.error('Error loading generated models:', error);
   }
 }
 
-loadGeneratedModels();
-
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
-module.exports =
-  { db, targetDbSequelize }
-  ;
+module.exports = {
+  db,
+  targetDbSequelize: (async () => {
+    await loadGeneratedModels();
+    return targetDbSequelize;
+  })(),
+};
