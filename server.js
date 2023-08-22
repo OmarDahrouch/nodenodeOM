@@ -1,4 +1,4 @@
-const express = require("express");
+const express = require('express');
 const { Sequelize } = require("sequelize");
 // const userRoute = require("./routes/userRoute");
 const cors = require("cors");
@@ -9,7 +9,7 @@ const PORT = 5000;
 app.use(cors());
 
 // DataBase Config ----------------------------------------------------
-const db = require("./models/index");
+const { db } = require("./models/index");
 
 db.sequelize
   .authenticate()
