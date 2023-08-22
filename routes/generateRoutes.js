@@ -1,50 +1,39 @@
-const db = require("../models/index");
+const express = require("express");
 const fs = require("fs");
-require("dotenv").config();
-const env = process.env.NODE_ENV || 'development';
+const path = require("path");
 
+const generateRoutes = async () => {
+  const modelsPath = path.join(__dirname, "../models");
+  const modelFiles = fs.readdirSync(modelsPath).filter(file => file.endsWith(".js"));
 
-async function logModels(Id) {
-    try {
-      console.log("db",db);
-      const models = await db.Model.findAll({
-        where: { ProjetId: Id },
-      });
+  for (const modelFile of modelFiles) {
+    const modelName = path.basename(modelFile, ".js");
+    const routeCode = `const express = require("express");
+const router = express.Router();
+const ${modelName}Controller = require("../controllers/${modelName}Controller");
 
-      return models;
-    } catch (error) {
-      console.error("Error:", error);
+router.get("/${modelName}", ${modelName}Controller.getAll);
+router.get("/${modelName}:id", ${modelName}Controller.getById);
+router.post("/${modelName}", ${modelName}Controller.create);
+router.put("/${modelName}:id", ${modelName}Controller.update);
+router.delete("/${modelName}:id", ${modelName}Controller.delete);
+
+module.exports = router;
+    `;
+
+    const folderPath = 'routes/generatedRoutes';
+    const filePath = `${folderPath}/${modelName.toLowerCase()}Route.js`;
+  
+    if (!fs.existsSync(folderPath)) {
+      fs.mkdirSync(folderPath, { recursive: true });
     }
+  
+    fs.writeFileSync(filePath, routeCode);
+    console.log(`Route for ${modelName} saved to ${filePath}`);
+  
   }
-const generateRoutes = async(ProjectId) => {
-    const Data = await logModels(ProjectId);
-    for(const model of Data){
 
-        let routeCode = `
-        const express = require("express");
-        const ${model.nomModel}Controller = require("../controllers/${model.nomModel}Controller");
-
-        const router = express.Router();
-
-        router.get("/", ${model.nomModel}Controller.getAll);
-        router.get("/:id", ${model.nomModel}Controller.getById);
-        router.post("/", ${model.nomModel}Controller.create);
-        router.put("/:id", ${model.nomModel}Controller.update);
-        router.delete("/:id", ${model.nomModel}Controller.delete);
-
-        module.exports = router;
-
-        `;
-        const routeFileName = `${model.nomModel}Route.js`;
-        const routeFilePath = path.join(__dirname, routeFileName);
-        fs.writeFileSync(routeFilePath, routeCode);
-    }
+  console.log("Routes generated successfully.");
 };
 
-
-const ProjectId = process.env.ProjetId;
-generateRoutes(ProjectId);
-
-console.log("generateRoutes",generateRoutes);
-
-module.exports = generateRoutes;
+generateRoutes();
