@@ -54,7 +54,7 @@ module.exports = (sequelize) => {
   Model.associate = function (models) {
     Model.hasMany(models.Colonne);
     Model.hasMany(models.ModelAssociation, {
-      foreignKey: "modelAId",
+      foreignKey: "modelAId", // Clé étrangère dans la table ModelAssociation faisant référence à Model (en tant que modelA)
       as: "modelAssociations",
     });
   };

@@ -8,7 +8,8 @@
   },
   "nodemonConfig": {
     "ignore": [
-      "generatedConstrollers/*"
+      "generatedConstrollers/*",
+      "generatedRoutes/*"
     ]
   },
   "author": "",

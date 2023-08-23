@@ -1,6 +1,8 @@
 const express = require('express');
 const { Sequelize } = require("sequelize");
-const generateControllers = require('./controllers/generateControllers')
+const generateController = require('./controllers/generateControllers')
+const generateRoutes = require('./routes/generateRoutes')
+const carRoute = require('./routes/generatedRoutes/driverRoute')
 
 const cors = require("cors");
 
@@ -25,3 +27,5 @@ app.listen(PORT, () => {
 });
 
 app.use(express.json());
+
+app.use("/test", carRoute)
