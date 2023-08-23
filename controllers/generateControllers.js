@@ -1,11 +1,10 @@
 const fs = require('fs');
-const  {dbtarget, db}  = require("../models/index");
+const { dbtarget, db } = require("../models/index");
 
 function generateControllers() {
 
   (async () => {
     const dbt = await dbtarget;
-    console.log("db",db);
     for (const modelName in dbt.targetDbSequelize.models) {
       const controller = generateController(modelName);
       saveControllerToFile(modelName, controller);
@@ -20,7 +19,8 @@ function generateController(modelName) {
     module.exports = {
       create: async (req, res) => {
         try {
-          const instance = await dbtarget.${modelName}.create(req.body);
+          const dbt = await dbtarget;
+          const instance = await dbt.${modelName}.create(req.body);
           return res.status(201).json(instance);
         } catch (error) {
           return res.status(500).json({ error: error.message });
@@ -28,7 +28,8 @@ function generateController(modelName) {
       },
       update: async (req, res) => {
         try {
-          const [updatedRows] = await dbtarget.${modelName}.update(req.body, {
+          const dbt = await dbtarget;
+          const [updatedRows] = await dbt.${modelName}.update(req.body, {
             where: { id: req.params.id },
           });
           if (updatedRows === 0) {
@@ -41,7 +42,8 @@ function generateController(modelName) {
       },
       findAll: async (req, res) => {
         try {
-          const instances = await dbtarget.${modelName}.findAll();
+          const dbt = await dbtarget;
+          const instances = await dbt.${modelName}.findAll();
           return res.status(200).json(instances);
         } catch (error) {
           return res.status(500).json({ error: error.message });
@@ -49,7 +51,8 @@ function generateController(modelName) {
       },
       findById: async (req, res) => {
         try {
-          const instance = await dbtarget.${modelName}.findByPk(req.params.id);
+          const dbt = await dbtarget;
+          const instance = await dbt.${modelName}.findByPk(req.params.id);
           if (!instance) {
             return res.status(404).json({ error: '${modelName} not found' });
           }
@@ -60,7 +63,8 @@ function generateController(modelName) {
       },
       delete: async (req, res) => {
         try {
-          const deletedRows = await dbtarget.${modelName}.destroy({
+          const dbt = await dbtarget;
+          const deletedRows = await dbt.${modelName}.destroy({
             where: { id: req.params.id },
           });
           if (deletedRows === 0) {

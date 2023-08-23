@@ -107,17 +107,27 @@ const generateModel = async (ProjectId) => {
         autoIncrement: colonne.autoIncrement,
         primaryKey: colonne.primaryKey,
         unique: colonne.unique,
-        field: colonne.field,
+        field: colonne.field || colonne.nomColonne,
       };
       columnDefinitions.push({ [colonne.nomColonne]: columnDef });
     }
-
+    console.log("columnDefinitions", columnDefinitions);
     const modelName = model.nomModel;
 
 
     // console.log(targetDbSequelize);
     const generatedModel = targetDbSequelize.define(modelName, {
       ...Object.assign({}, ...columnDefinitions),
+    }, {
+      paranoid: model.paranoid,
+      timestamps: model.timestamp,
+      createdAt: model.createdAtModel || "createdAt",
+      updatedAt: model.updatedAtModel || "updatedAt",
+      deletedAt: model.deletedAtModel || "deletedAt",
+      underscored: model.underscored,
+      freezeTableName: model.freezeTableName,
+      paranoidKey: model.paranoidKey,
+      version: model.version
     });
 
 
@@ -136,7 +146,6 @@ async function loadGeneratedModels() {
   try {
     const generatedModels = await generateModel(ProjectId);
 
-
     for (const model of generatedModels) {
       const associationsData = await getAssociationsForModel(model.name);
       for (const association of associationsData) {
@@ -151,7 +160,7 @@ async function loadGeneratedModels() {
         }
       }
     }
-    await dbtarget.targetDbSequelize.sync();
+    await dbtarget.targetDbSequelize.sync({ alter: true });
 
     console.log('Generated models loaded successfully.');
 

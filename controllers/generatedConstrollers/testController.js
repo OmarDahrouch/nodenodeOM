@@ -3,7 +3,8 @@ const { dbtarget } = require("../../models/index");
     module.exports = {
       create: async (req, res) => {
         try {
-          const instance = await dbtarget.Test.create(req.body);
+          const dbt = await dbtarget;
+          const instance = await dbt.Test.create(req.body);
           return res.status(201).json(instance);
         } catch (error) {
           return res.status(500).json({ error: error.message });
@@ -11,7 +12,8 @@ const { dbtarget } = require("../../models/index");
       },
       update: async (req, res) => {
         try {
-          const [updatedRows] = await dbtarget.Test.update(req.body, {
+          const dbt = await dbtarget;
+          const [updatedRows] = await dbt.Test.update(req.body, {
             where: { id: req.params.id },
           });
           if (updatedRows === 0) {
@@ -24,7 +26,8 @@ const { dbtarget } = require("../../models/index");
       },
       findAll: async (req, res) => {
         try {
-          const instances = await dbtarget.Test.findAll();
+          const dbt = await dbtarget;
+          const instances = await dbt.Test.findAll();
           return res.status(200).json(instances);
         } catch (error) {
           return res.status(500).json({ error: error.message });
@@ -32,7 +35,8 @@ const { dbtarget } = require("../../models/index");
       },
       findById: async (req, res) => {
         try {
-          const instance = await dbtarget.Test.findByPk(req.params.id);
+          const dbt = await dbtarget;
+          const instance = await dbt.Test.findByPk(req.params.id);
           if (!instance) {
             return res.status(404).json({ error: 'Test not found' });
           }
@@ -43,7 +47,8 @@ const { dbtarget } = require("../../models/index");
       },
       delete: async (req, res) => {
         try {
-          const deletedRows = await dbtarget.Test.destroy({
+          const dbt = await dbtarget;
+          const deletedRows = await dbt.Test.destroy({
             where: { id: req.params.id },
           });
           if (deletedRows === 0) {

@@ -1,4 +1,4 @@
-const {dbtarget} = require("../models/index");
+const { dbtarget } = require("../models/index");
 const fs = require("fs");
 require("dotenv").config();
 const env = process.env.NODE_ENV || 'development';
@@ -40,7 +40,7 @@ function saveRouteToFile(modelName, routeCode) {
   if (!fs.existsSync(folderPath)) {
     fs.mkdirSync(folderPath, { recursive: true });
   }
-  
+
   fs.writeFileSync(filePath, routeCode);
   console.log(`Route for ${modelName} saved to ${filePath}`);
 }
