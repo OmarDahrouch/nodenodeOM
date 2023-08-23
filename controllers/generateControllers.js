@@ -1,31 +1,34 @@
 const fs = require('fs');
-const { targetDbSequelize } = require("./models/index");
-
+const  {dbtarget, db}  = require("../models/index");
 
 function generateControllers() {
-  for (const modelName in targetDbSequelize) {
-    const model = targetDbSequelize[modelName];
-    const controller = generateController(modelName, model);
-    saveControllerToFile(modelName, controller);
-  }
+
+  (async () => {
+    const dbt = await dbtarget;
+    console.log("db",db);
+    for (const modelName in dbt.targetDbSequelize.models) {
+      const controller = generateController(modelName);
+      saveControllerToFile(modelName, controller);
+    }
+
+  })();
 }
 
-function generateController(modelName, model) {
-  const controller = `
-    const ${modelName} = require('../models').${modelName};
+function generateController(modelName) {
+  const controller = `const { dbtarget } = require("../../models/index");
 
     module.exports = {
       create: async (req, res) => {
         try {
-          const instance = await ${modelName}.create(req.body);
+          const instance = await dbtarget.${modelName}.create(req.body);
           return res.status(201).json(instance);
         } catch (error) {
-          return res.status(500).json({ error: 'Internal Server Error' });
+          return res.status(500).json({ error: error.message });
         }
       },
       update: async (req, res) => {
         try {
-          const [updatedRows] = await ${modelName}.update(req.body, {
+          const [updatedRows] = await dbtarget.${modelName}.update(req.body, {
             where: { id: req.params.id },
           });
           if (updatedRows === 0) {
@@ -33,39 +36,39 @@ function generateController(modelName, model) {
           }
           return res.status(200).json({ message: '${modelName} updated successfully' });
         } catch (error) {
-          return res.status(500).json({ error: 'Internal Server Error' });
+          return res.status(500).json({ error: error.message });
         }
       },
       findAll: async (req, res) => {
         try {
-          const instances = await ${modelName}.findAll();
+          const instances = await dbtarget.${modelName}.findAll();
           return res.status(200).json(instances);
         } catch (error) {
-          return res.status(500).json({ error: 'Internal Server Error' });
+          return res.status(500).json({ error: error.message });
         }
       },
       findById: async (req, res) => {
         try {
-          const instance = await ${modelName}.findByPk(req.params.id);
+          const instance = await dbtarget.${modelName}.findByPk(req.params.id);
           if (!instance) {
             return res.status(404).json({ error: '${modelName} not found' });
           }
           return res.status(200).json(instance);
         } catch (error) {
-          return res.status(500).json({ error: 'Internal Server Error' });
+          return res.status(500).json({ error: error.message });
         }
       },
       delete: async (req, res) => {
         try {
-          const deletedRows = await ${modelName}.destroy({
+          const deletedRows = await dbtarget.${modelName}.destroy({
             where: { id: req.params.id },
           });
           if (deletedRows === 0) {
             return res.status(404).json({ error: '${modelName} not found' });
           }
-          return res.status(204).send(); // No content
+          return res.status(204).send(); 
         } catch (error) {
-          return res.status(500).json({ error: 'Internal Server Error' });
+          return res.status(500).json({ error: error.message });
         }
       },
     };
@@ -75,9 +78,17 @@ function generateController(modelName, model) {
 }
 
 function saveControllerToFile(modelName, controller) {
-  const filePath = `controllers/${modelName.toLowerCase()}Controller.js`;
+  const folderPath = 'controllers/generatedConstrollers';
+  const filePath = `${folderPath}/${modelName.toLowerCase()}Controller.js`;
+
+  if (!fs.existsSync(folderPath)) {
+    fs.mkdirSync(folderPath, { recursive: true });
+  }
+
   fs.writeFileSync(filePath, controller);
   console.log(`Controller for ${modelName} saved to ${filePath}`);
 }
 
 generateControllers();
+
+module.exports = generateControllers;

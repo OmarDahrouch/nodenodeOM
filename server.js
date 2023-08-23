@@ -1,6 +1,8 @@
 const express = require('express');
 const { Sequelize } = require("sequelize");
-// const userRoute = require("./routes/userRoute");
+const generateController = require('./controllers/generateControllers')
+const generateRoutes = require('./routes/generateRoutes')
+
 const cors = require("cors");
 
 const app = express();

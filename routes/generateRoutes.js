@@ -1,39 +1,51 @@
-const express = require("express");
+const {dbtarget} = require("../models/index");
 const fs = require("fs");
-const path = require("path");
+require("dotenv").config();
+const env = process.env.NODE_ENV || 'development';
 
-const generateRoutes = async () => {
-  const modelsPath = path.join(__dirname, "../models");
-  const modelFiles = fs.readdirSync(modelsPath).filter(file => file.endsWith(".js"));
+function generateRouters() {
+  (async () => {
+    const dbt = await dbtarget;
 
-  for (const modelFile of modelFiles) {
-    const modelName = path.basename(modelFile, ".js");
-    const routeCode = `const express = require("express");
+    for (const modelName in dbt.targetDbSequelize.models) {
+      const routeCode = generateRouter(modelName);
+      saveRouteToFile(modelName, routeCode);
+    }
+
+  })();
+}
+
+function generateRouter(nameModel) {
+  const modelName = nameModel.toLowerCase();
+  const routeCode = `const express = require("express");
+const ${modelName}Controller = require("../../controllers/generatedConstrollers/${modelName}Controller");
+
 const router = express.Router();
-const ${modelName}Controller = require("../controllers/${modelName}Controller");
 
-router.get("/${modelName}", ${modelName}Controller.getAll);
-router.get("/${modelName}:id", ${modelName}Controller.getById);
-router.post("/${modelName}", ${modelName}Controller.create);
-router.put("/${modelName}:id", ${modelName}Controller.update);
-router.delete("/${modelName}:id", ${modelName}Controller.delete);
+router.get("/", ${modelName}Controller.findAll);
+router.post("/", ${modelName}Controller.create);
+// router.put("/:id", ${modelName}Controller.update);
+// router.get("/:id", ${modelName}Controller.findById);
+// router.delete("/:id", ${modelName}Controller.delete);
 
 module.exports = router;
-    `;
+  `;
+  return routeCode;
+}
 
-    const folderPath = 'routes/generatedRoutes';
-    const filePath = `${folderPath}/${modelName.toLowerCase()}Route.js`;
-  
-    if (!fs.existsSync(folderPath)) {
-      fs.mkdirSync(folderPath, { recursive: true });
-    }
-  
-    fs.writeFileSync(filePath, routeCode);
-    console.log(`Route for ${modelName} saved to ${filePath}`);
-  
+function saveRouteToFile(modelName, routeCode) {
+  const folderPath = 'routes/generatedRoutes';
+  const filePath = `${folderPath}/${modelName.toLowerCase()}Route.js`;
+
+  if (!fs.existsSync(folderPath)) {
+    fs.mkdirSync(folderPath, { recursive: true });
   }
+  
+  fs.writeFileSync(filePath, routeCode);
+  console.log(`Route for ${modelName} saved to ${filePath}`);
+}
 
-  console.log("Routes generated successfully.");
-};
+generateRouters();
 
-generateRoutes();
+
+module.exports = generateRouter;
