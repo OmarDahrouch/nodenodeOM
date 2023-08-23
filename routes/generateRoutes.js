@@ -24,9 +24,9 @@ const router = express.Router();
 
 router.get("/", ${modelName}Controller.findAll);
 router.post("/", ${modelName}Controller.create);
-// router.put("/:id", ${modelName}Controller.update);
-// router.get("/:id", ${modelName}Controller.findById);
-// router.delete("/:id", ${modelName}Controller.delete);
+router.get("/:id", ${modelName}Controller.findById);
+router.delete("/:id", ${modelName}Controller.delete);
+router.put("/:id", ${modelName}Controller.update);
 
 module.exports = router;
   `;

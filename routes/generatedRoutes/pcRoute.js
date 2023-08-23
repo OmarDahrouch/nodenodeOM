@@ -5,9 +5,9 @@ const router = express.Router();
 
 router.get("/", pcController.findAll);
 router.post("/", pcController.create);
-// router.put("/:id", pcController.update);
-// router.get("/:id", pcController.findById);
-// router.delete("/:id", pcController.delete);
+router.get("/:id", pcController.findById);
+router.delete("/:id", pcController.delete);
+router.put("/:id", pcController.update);
 
 module.exports = router;
   
