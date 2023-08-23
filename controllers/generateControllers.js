@@ -1,11 +1,12 @@
 const fs = require('fs');
-const { targetDbSequelize } = require("../models/index");
+const { dbtarget, db } = require("../models/index");
 
 function generateControllers() {
-  (async () => {
-    const targetSequelize = await targetDbSequelize;
 
-    for (const modelName in targetSequelize.models) {
+  (async () => {
+    const dbt = await dbtarget;
+    console.log("db", db);
+    for (const modelName in dbt.targetDbSequelize.models) {
       const controller = generateController(modelName);
       saveControllerToFile(modelName, controller);
     }
@@ -14,20 +15,20 @@ function generateControllers() {
 }
 
 function generateController(modelName) {
-  const controller = `const { targetDbSequelize } = require("../models/index");
+  const controller = `const { dbtarget } = require("../../models/index");
 
     module.exports = {
       create: async (req, res) => {
         try {
-          const instance = await targetDbSequelize.${modelName}.create(req.body);
+          const instance = await dbtarget.${modelName}.create(req.body);
           return res.status(201).json(instance);
         } catch (error) {
-          return res.status(500).json({ error: 'Internal Server Error' });
+          return res.status(500).json({ error: error.message });
         }
       },
       update: async (req, res) => {
         try {
-          const [updatedRows] = await targetDbSequelize.${modelName}.update(req.body, {
+          const [updatedRows] = await dbtarget.${modelName}.update(req.body, {
             where: { id: req.params.id },
           });
           if (updatedRows === 0) {
@@ -35,31 +36,31 @@ function generateController(modelName) {
           }
           return res.status(200).json({ message: '${modelName} updated successfully' });
         } catch (error) {
-          return res.status(500).json({ error: 'Internal Server Error' });
+          return res.status(500).json({ error: error.message });
         }
       },
       findAll: async (req, res) => {
         try {
-          const instances = await targetDbSequelize.${modelName}.findAll();
+          const instances = await dbtarget.${modelName}.findAll();
           return res.status(200).json(instances);
         } catch (error) {
-          return res.status(500).json({ error: 'Internal Server Error' });
+          return res.status(500).json({ error: error.message });
         }
       },
       findById: async (req, res) => {
         try {
-          const instance = await targetDbSequelize.${modelName}.findByPk(req.params.id);
+          const instance = await dbtarget.${modelName}.findByPk(req.params.id);
           if (!instance) {
             return res.status(404).json({ error: '${modelName} not found' });
           }
           return res.status(200).json(instance);
         } catch (error) {
-          return res.status(500).json({ error: 'Internal Server Error' });
+          return res.status(500).json({ error: error.message });
         }
       },
       delete: async (req, res) => {
         try {
-          const deletedRows = await targetDbSequelize.${modelName}.destroy({
+          const deletedRows = await dbtarget.${modelName}.destroy({
             where: { id: req.params.id },
           });
           if (deletedRows === 0) {
@@ -67,7 +68,7 @@ function generateController(modelName) {
           }
           return res.status(204).send(); 
         } catch (error) {
-          return res.status(500).json({ error: 'Internal Server Error' });
+          return res.status(500).json({ error: error.message });
         }
       },
     };

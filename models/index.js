@@ -121,7 +121,7 @@ const generateModel = async (ProjectId) => {
     });
 
 
-    targetDbSequelize[modelName] = generatedModel;
+    dbtarget[modelName] = generatedModel;
 
     generatedModels.push(generatedModel);
   }
@@ -151,7 +151,7 @@ async function loadGeneratedModels() {
         }
       }
     }
-    await targetDbSequelize.sync();
+    await dbtarget.targetDbSequelize.sync();
 
     console.log('Generated models loaded successfully.');
 
@@ -164,10 +164,14 @@ async function loadGeneratedModels() {
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
+dbtarget.targetDbSequelize = targetDbSequelize;
+dbtarget.Sequelize = Sequelize;
+
+
 module.exports = {
   db,
-  targetDbSequelize: (async () => {
+  dbtarget: (async () => {
     await loadGeneratedModels();
-    return targetDbSequelize;
+    return dbtarget;
   })(),
 };
