@@ -17,15 +17,16 @@ function setupGeneratedRoutes(app) {
 
   fs.readdirSync(generatedRoutesFolderPath).forEach(file => {
     const filePath = path.join(generatedRoutesFolderPath, file);
-    const fileNameWithoutRoute = path.basename(file, 'Route.js'); 
+    const fileNameWithoutRoute = path.basename(file, 'Route.js');
 
     const routeModule = require(filePath);
 
     if (typeof routeModule === 'function') {
-      app.use("/"+fileNameWithoutRoute,routeModule);
+      app.use("/" + fileNameWithoutRoute, routeModule);
     }
   });
 }
+
 setupGeneratedRoutes(app);
 
 // DataBase Config ----------------------------------------------------
