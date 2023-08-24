@@ -111,7 +111,6 @@ const generateModel = async (ProjectId) => {
       };
       columnDefinitions.push({ [colonne.nomColonne]: columnDef });
     }
-    console.log("columnDefinitions", columnDefinitions);
     const modelName = model.nomModel;
 
 
@@ -150,13 +149,13 @@ async function loadGeneratedModels() {
       const associationsData = await getAssociationsForModel(model.name);
       for (const association of associationsData) {
         if (association.Association.typeAssociation === 'belongsTo') {
-          model.belongsTo(targetDbSequelize[association.modelB.nomModel]);
+          model.belongsTo(dbtarget[association.modelB.nomModel]);
         } else if (association.Association.typeAssociation === 'hasMany') {
-          model.hasMany(targetDbSequelize[association.modelB.nomModel]);
+          model.hasMany(dbtarget[association.modelB.nomModel]);
         } else if (association.Association.typeAssociation === 'hasOne') {
-          model.hasOne(targetDbSequelize[association.modelB.nomModel]);
+          model.hasOne(dbtarget[association.modelB.nomModel]);
         } else if (association.Association.typeAssociation === 'belongsToMany') {
-          model.belongsToMany(targetDbSequelize[association.modelB.nomModel], { through: `${model.name}_${association.modelB.nomModel}` });
+          model.belongsToMany(dbtarget[association.modelB.nomModel], { through: `${model.name}_${association.modelB.nomModel}` });
         }
       }
     }
@@ -169,6 +168,8 @@ async function loadGeneratedModels() {
     console.error('Error loading generated models:', error);
   }
 }
+
+
 
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
