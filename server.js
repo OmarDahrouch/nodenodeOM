@@ -15,19 +15,29 @@ app.use(cors());
 function setupGeneratedRoutes(app) {
   const generatedRoutesFolderPath = path.join(__dirname, 'routes', 'generatedRoutes');
 
-  fs.readdirSync(generatedRoutesFolderPath).forEach(file => {
-    const filePath = path.join(generatedRoutesFolderPath, file);
-    const fileNameWithoutRoute = path.basename(file, 'Route.js');
+  function checkAndLoadRoutes() {
+    if (fs.existsSync(generatedRoutesFolderPath)) {
+      fs.readdirSync(generatedRoutesFolderPath).forEach(file => {
+        const filePath = path.join(generatedRoutesFolderPath, file);
+        const fileNameWithoutRoute = path.basename(file, 'Route.js');
 
-    const routeModule = require(filePath);
+        const routeModule = require(filePath);
 
-    if (typeof routeModule === 'function') {
-      app.use("/" + fileNameWithoutRoute, routeModule);
+        if (typeof routeModule === 'function') {
+          app.use("/" + fileNameWithoutRoute, routeModule);
+        }
+      });
+    } else {
+      setTimeout(checkAndLoadRoutes, 1000); 
     }
-  });
+  }
+
+  checkAndLoadRoutes(); 
 }
 
 setupGeneratedRoutes(app);
+
+
 
 // DataBase Config ----------------------------------------------------
 const { db } = require("./models/index");

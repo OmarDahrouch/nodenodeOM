@@ -13,11 +13,11 @@ const db = {};
 const dbtarget = {};
 
 const targetDbConfig = {
-  username: "root",
-  password: "",
-  database: "test1",
-  host: "127.0.0.1",
-  dialect: "mysql"
+  username: process.env.TARGET_DB_USERNAME,
+  password: process.env.TARGET_DB_PASSWORD,
+  database: process.env.TARGET_DB_DATABASE,
+  host: process.env.TARGET_DB_HOST,
+  dialect: process.env.TARGET_DB_DIALECT,
 };
 
 const targetDbSequelize = new Sequelize(targetDbConfig);
